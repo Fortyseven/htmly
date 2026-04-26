@@ -1,0 +1,124 @@
+/**
+ * HTML Scratchpad — Prism.js Dark Theme
+ *
+ * Styled to match the app's dark color scheme.
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+    color: #c0caf5;
+    background: none;
+    text-shadow: 0 0.1em #000;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    direction: ltr;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+    word-break: normal;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+}
+
+pre[class*="language-"] {
+    padding: 16px;
+    margin: 0;
+    overflow: auto;
+    border-radius: 6px;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+    background: #1a1b26;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: #24283b;
+}
+
+/* Tokens */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: #565f89;
+}
+
+.token.punctuation {
+    color: #a9b1d6;
+}
+
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant {
+    color: #ff9e64;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+    color: #9ece6a;
+}
+
+.token.property,
+.token.variable,
+.token.inserted {
+    color: #7aa2f7;
+}
+
+.token.entity,
+.token.url,
+.token.attr-value,
+.control,
+.token.regex,
+.token.atrule,
+.token.placeholder {
+    color: #7dcfff;
+}
+
+.token.attribute,
+.token.symbol,
+.token.parameter {
+    color: #bb9af7;
+}
+
+.token.deleted {
+    color: #f7768e;
+}
+
+.token.operator,
+.token.entity,
+.token.url {
+    color: #7aa2f7;
+}
+
+.token.important,
+.token.bold {
+    font-weight: bold;
+}
+
+.token.italic {
+    font-style: italic;
+}
+
+.token.entity {
+    cursor: help;
+}
+
+/* Line numbers (if used) */
+pre[class*="language-"] > code {
+    white-space: pre;
+    overflow: auto;
+}

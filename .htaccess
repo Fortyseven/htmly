@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# Serve existing files directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route /s/{guid} to index.php
+RewriteRule ^s/([a-zA-Z0-9]+)$ index.php?guid=$1 [L,QSA]
+
+# Block access to sensitive files
+<FilesMatch "^(config\.php|db\.php|\.git)">
+    Require all denied
+</FilesMatch>
