@@ -236,7 +236,7 @@ function render_home(): void
 ?>
 <body>
     <div class="header">
-        <h1>HTML <span>Scratchpad</span></h1>
+        <a href="/" style="text-decoration:none; color:inherit;"><h1>HTML <span>Scratchpad</span></h1></a>
         <span class="badge">beta</span>
     </div>
 
@@ -277,7 +277,7 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
 ?>
 <body>
     <div class="header">
-        <h1>HTML <span>Scratchpad</span></h1>
+        <a href="/" style="text-decoration:none; color:inherit;"><h1>HTML <span>Scratchpad</span></h1></a>
         <span class="badge <?= $isEdit ? 'edit' : '' ?>"><?= $isEdit ? 'editing' : 'viewing' ?></span>
     </div>
 

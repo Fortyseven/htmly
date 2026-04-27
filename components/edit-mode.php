@@ -1,7 +1,7 @@
 <?php
 /**
  * Edit Mode component — split-pane (HTML textarea left, iframe preview right).
- * No tabs. Editable content with live preview.
+ * No tabs. Editable content with live preview and syntax highlighting.
  *
  * @param string $htmlContent   Initial HTML content.
  * @param string $guid          Snippet GUID (optional, for edit-mode endpoints).
@@ -34,6 +34,7 @@ $previewPanel = 'edit-preview-panel';
     <button class="btn btn-primary" id="edit-save-btn">💾 Save</button>
     <div class="divider"></div>
     <button class="btn btn-secondary" id="edit-copy-btn">📋 Copy HTML to Clipboard</button>
+    <button class="btn btn-secondary" id="edit-share-btn">🔗 Copy Share Link</button>
     <button class="btn btn-secondary" id="edit-download-btn">⬇️ Download HTML</button>
     <?php if (!empty($guid)): ?>
     <button class="btn btn-danger" id="edit-delete-btn">🗑️ Delete snippet</button>
@@ -47,7 +48,8 @@ $previewPanel = 'edit-preview-panel';
 <!-- Main: Split-pane with resizable divider -->
 <div class="main" id="<?= $mainId ?>">
     <div class="editor-panel" id="<?= $editorPanel ?>">
-        <textarea id="<?= $editorId ?>" placeholder="Type your HTML here..." autofocus><?= htmlspecialchars($htmlContent) ?></textarea>
+        <textarea id="<?= $editorId ?>" spellcheck="false" wrap="off"></textarea>
+        <pre id="highlight-overlay"><code id="highlight-code" class="language-html"></code></pre>
     </div>
     <div class="divider" id="<?= $resizeId ?>"></div>
     <div class="preview-panel" id="<?= $previewPanel ?>">
@@ -65,6 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var downloadBtn = document.getElementById('edit-download-btn');
     var deleteBtn = document.getElementById('edit-delete-btn');
     var resizeHandle = document.getElementById('<?= $resizeId ?>');
+    var highlightOverlay = document.getElementById('highlight-overlay');
+    var highlightCode  = document.getElementById('highlight-code');
     var editorPanel = document.getElementById('<?= $editorPanel ?>');
     var mainArea = document.getElementById('<?= $mainId ?>');
     var guid = document.getElementById('edit-guid').value;
@@ -84,17 +88,95 @@ document.addEventListener('DOMContentLoaded', function() {
         preview.appendChild(iframe);
     }
 
+    /* ── Syntax highlight ────────────────────────── */
+
+    function updateHighlight() {
+        var text = editor.value;
+        // Handle trailing newline: Prism ignores empty final line
+        var originalText = text;
+        if (text[text.length - 1] === '\n') {
+            text += ' ';
+        }
+        // HTML-escape < and & so Prism doesn't interpret them as tags
+        highlightCode.innerHTML = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;');
+        try { Prism.highlightElement(highlightCode); } catch(e) {}
+    }
+
+    /* ── Scroll sync ─────────────────────────────── */
+
+    function syncScroll(source, target) {
+        target.scrollTop = source.scrollTop;
+        target.scrollLeft = source.scrollLeft;
+    }
+
+    var syncingScroll = false;
+    editor.addEventListener('scroll', function() {
+        if (syncingScroll) return;
+        syncingScroll = true;
+        syncScroll(editor, highlightOverlay);
+        syncingScroll = false;
+    });
+    highlightOverlay.addEventListener('scroll', function() {
+        if (syncingScroll) return;
+        syncingScroll = true;
+        syncScroll(highlightOverlay, editor);
+        syncingScroll = false;
+    });
+
+    /* ── Tab key handling ────────────────────────── */
+
+    editor.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            var start = editor.selectionStart;
+            var end = editor.selectionEnd;
+            // Insert tab character
+            editor.value = editor.value.substring(0, start) + '\t' + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + 1;
+            updateHighlight();
+            if (liveToggle.checked) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(updatePreview, <?= LIVE_PREVIEW_DEBOUNCE ?>);
+            }
+        }
+    });
+
+    /* ── Input handler ───────────────────────────── */
+
     editor.addEventListener('input', function() {
+        updateHighlight();
         if (liveToggle.checked) {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(updatePreview, <?= LIVE_PREVIEW_DEBOUNCE ?>);
         }
     });
 
-    // Initial preview
+    /* ── Paste as plain text ─────────────────────── */
+
+    editor.addEventListener('paste', function(e) {
+        e.preventDefault();
+        var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        var start = editor.selectionStart;
+        var end = editor.selectionEnd;
+        editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + text.length;
+        updateHighlight();
+        if (liveToggle.checked) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updatePreview, <?= LIVE_PREVIEW_DEBOUNCE ?>);
+        }
+    });
+
+    /* ── Set initial content & highlight ─────────── */
+
+    editor.value = <?= json_encode($htmlContent ?: '') ?>;
     if (editor.value.trim()) {
+        updateHighlight();
         updatePreview();
     }
+    editor.focus();
 
     /* ── Split pane resize ───────────────────────── */
 
@@ -147,6 +229,20 @@ document.addEventListener('DOMContentLoaded', function() {
         copyBtn.textContent = '✓ Copied!';
         setTimeout(function() { copyBtn.textContent = '📋 Copy HTML to Clipboard'; }, 1500);
     });
+
+    /* ── Copy Share Link (strips token from URL) ─── */
+
+    var shareBtn = document.getElementById('edit-share-btn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', function() {
+            var url = window.location.href;
+            // Remove token query parameter
+            url = url.replace(/\?.*$/, '');
+            copyToClipboard(url);
+            shareBtn.textContent = '✓ Copied!';
+            setTimeout(function() { shareBtn.textContent = '🔗 Copy Share Link'; }, 1500);
+        });
+    }
 
     /* ── Download HTML ───────────────────────────── */
 
@@ -241,7 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ── Helpers ─────────────────────────────────── */
 
     function flashMessage(msg) {
-        // Create a temporary flash message at the top of the page
         var flashEl = document.getElementById('flash');
         if (!flashEl) {
             flashEl = document.createElement('div');
@@ -252,8 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         flashEl.querySelector('.msg') ? flashEl.querySelector('.msg').textContent = msg : flashEl.textContent = msg;
         flashEl.classList.add('visible');
-
-        // Auto-dismiss after 4 seconds
         setTimeout(function() {
             flashEl.classList.remove('visible');
         }, 4000);

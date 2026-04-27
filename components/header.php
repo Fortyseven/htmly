@@ -8,8 +8,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $pageTitle ?? 'HTML Scratchpad' ?></title>
-    <link rel="stylesheet" href="prism.css">
-    <script src="prism.js"></script>
+    <link rel="stylesheet" href="/prism.css">
+    <script src="/prism.js"></script>
     <style>
         /* ── Reset & base ────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,7 +46,7 @@
             gap: 12px;
             flex-shrink: 0;
         }
-        .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+        .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; }
         .header h1 span { color: var(--accent); }
         .header .badge {
             font-size: 11px; padding: 2px 8px; border-radius: 99px;
@@ -126,18 +126,57 @@
 
         /* Editor panel */
         .editor-panel {
-            width: 40%; min-width: 200px; display: flex; flex-direction: column;
-            border-right: 1px solid var(--border); background: var(--bg);
+            width: 40%; min-width: 200px; position: relative; background: var(--bg);
+            border-right: 1px solid var(--border);
         }
-        .editor-panel textarea {
-            flex: 1; width: 100%; padding: 16px; border: none; outline: none; resize: none;
-            background: transparent; color: var(--text);
+
+        /* Shared font/line-height for both textarea and overlay */
+        .editor-panel textarea, .editor-panel pre, .editor-panel code, .editor-panel .token {
             font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
-            font-size: 13px; line-height: 1.6; tab-size: 4;
+            font-size: 13px;
+            line-height: 1.6;
+            tab-size: 4;
         }
-        .editor-panel textarea::placeholder { color: var(--text-muted); }
-        .editor-panel textarea:read-only {
-            color: var(--text-muted); cursor: default;
+
+        /* Highlight overlay (behind textarea) */
+        #highlight-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            margin: 0; padding: 16px;
+            border: none; outline: none; resize: none;
+            background: transparent;
+            white-space: pre; overflow: auto;
+            pointer-events: none;
+            z-index: 1;
+        }
+        #highlight-overlay code {
+            white-space: pre; display: block; min-height: 100%;
+        }
+
+        /* Textarea (on top, transparent) */
+        .editor-panel textarea#edit-editor {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            margin: 0; padding: 16px;
+            border: none; outline: none; resize: none;
+            background: transparent;
+            color: transparent;
+            caret-color: var(--text);
+            white-space: pre; overflow: auto;
+            -webkit-text-fill-color: transparent;
+            appearance: none;
+            -moz-appearance: none;
+            z-index: 2;
+        }
+        /* Placeholder shown when textarea is empty */
+        .editor-panel textarea#edit-editor:empty::before {
+            content: "Type your HTML here...";
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        /* Token styles: colors show through transparent textarea */
+        #highlight-overlay .token {
+            text-shadow: none;
         }
 
         /* Divider / resize handle */
