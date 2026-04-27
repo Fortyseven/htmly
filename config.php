@@ -43,5 +43,8 @@ define('HEADER_CONTENT_TYPE', 'nosniff');
 // ── Live preview debounce (ms) ────────────────────────────────
 define('LIVE_PREVIEW_DEBOUNCE', 300);
 
+// ── Preview defaults ──────────────────────────────────────────
+define('DEFAULT_JS_ENABLED', true);             // JS/Canvas in iframes by default
+
 // ── Session / flash ───────────────────────────────────────────
 define('SESSION_NAME', 'htmly');

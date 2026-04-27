@@ -256,7 +256,9 @@ function render_home(): void
     require __DIR__ . '/components/edit-mode.php';
     ?>
 
+    <?php if (!DEFAULT_JS_ENABLED): ?>
     <div class="info-note">⚠️ Inline JS is blocked for security — CSS will work.</div>
+    <?php endif; ?>
 
 </body>
 </html>
@@ -295,7 +297,9 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
         ?>
     <?php endif; ?>
 
+    <?php if (!DEFAULT_JS_ENABLED): ?>
     <div class="info-note">⚠️ Inline JS is blocked for security — CSS will work.</div>
+    <?php endif; ?>
 
 </body>
 </html>

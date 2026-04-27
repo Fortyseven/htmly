@@ -26,7 +26,7 @@ $previewPanel = 'edit-preview-panel';
         Live Update
     </label>
     <label class="toggle">
-        <input type="checkbox" id="edit-js-toggle">
+        <input type="checkbox" id="edit-js-toggle"<?= DEFAULT_JS_ENABLED ? ' checked' : '' ?>>
         Enable JS / Canvas
     </label>
     <div class="divider"></div>
@@ -82,11 +82,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* ── JS / Canvas toggle ──────────────────────── */
 
-    /* Restore preference */
+    /* Restore preference or use server default */
     var storedJs = sessionStorage.getItem('edit-js-toggle');
-    if (storedJs === 'true') {
-        jsToggle.checked = true;
-    }
+    jsToggle.checked = storedJs !== null ? (storedJs === 'true') : <?= DEFAULT_JS_ENABLED ? 'true' : 'false' ?>;
 
     jsToggle.addEventListener('change', function() {
         sessionStorage.setItem('edit-js-toggle', jsToggle.checked);

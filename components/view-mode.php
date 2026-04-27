@@ -20,7 +20,7 @@ $sourceId  = 'view-source';
     </div>
     <div class="divider"></div>
     <label class="toggle">
-        <input type="checkbox" id="view-js-toggle">
+        <input type="checkbox" id="view-js-toggle"<?= DEFAULT_JS_ENABLED ? ' checked' : '' ?>>
         Enable JS / Canvas
     </label>
     <div class="divider"></div>
@@ -51,9 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* ── Restore JS toggle preference ────────────── */
     var storedJs = sessionStorage.getItem('view-js-toggle');
-    if (storedJs === 'true') {
-        jsToggle.checked = true;
-    }
+    jsToggle.checked = storedJs !== null ? (storedJs === 'true') : <?= DEFAULT_JS_ENABLED ? 'true' : 'false' ?>;
 
     /* ── JS / Canvas toggle ──────────────────────── */
 
