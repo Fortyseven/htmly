@@ -59,7 +59,7 @@ snippets.db    ← SQLite database (auto-created on first run)
 
 | Layer | Detail |
 |---|---|
-| Iframe sandbox | `sandbox="allow-same-origin"` only — no scripts, forms, or popups |
+| Iframe sandbox | `sandbox="allow-same-origin"` by default (strict). User can opt-in via "Enable JS / Canvas" toggle → switches to `sandbox="allow-scripts allow-same-origin"`. |
 | CSP header | `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'` |
 | X-Frame-Options | `SAMEORIGIN` |
 | Max snippet | 50 KB server-side enforcement |

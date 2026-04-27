@@ -25,6 +25,10 @@ $previewPanel = 'edit-preview-panel';
         <input type="checkbox" id="edit-live-toggle" checked>
         Live Update
     </label>
+    <label class="toggle">
+        <input type="checkbox" id="edit-js-toggle">
+        Enable JS / Canvas
+    </label>
     <div class="divider"></div>
     <select class="ttl-select" id="edit-ttl-select" title="Snippet TTL">
         <?php foreach ($ttlPreset as $secs => $label): ?>
@@ -62,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var editor = document.getElementById('<?= $editorId ?>');
     var preview = document.getElementById('<?= $previewId ?>');
     var liveToggle = document.getElementById('edit-live-toggle');
+    var jsToggle = document.getElementById('edit-js-toggle');
     var saveBtn = document.getElementById('edit-save-btn');
     var copyBtn = document.getElementById('edit-copy-btn');
     var downloadBtn = document.getElementById('edit-download-btn');
@@ -75,12 +80,25 @@ document.addEventListener('DOMContentLoaded', function() {
     var token = document.getElementById('edit-token').value;
     var debounceTimer = null;
 
+    /* ── JS / Canvas toggle ──────────────────────── */
+
+    /* Restore preference */
+    var storedJs = sessionStorage.getItem('edit-js-toggle');
+    if (storedJs === 'true') {
+        jsToggle.checked = true;
+    }
+
+    jsToggle.addEventListener('change', function() {
+        sessionStorage.setItem('edit-js-toggle', jsToggle.checked);
+        updatePreview();
+    });
+
     /* ── Preview update ──────────────────────────── */
 
     function updatePreview() {
         var html = editor.value;
         var iframe = document.createElement('iframe');
-        iframe.setAttribute('sandbox', 'allow-same-origin');
+        iframe.setAttribute('sandbox', jsToggle.checked ? 'allow-scripts allow-same-origin' : 'allow-same-origin');
         iframe.setAttribute('srcdoc', html);
         iframe.style.height = '100%';
         iframe.style.flex = '1';

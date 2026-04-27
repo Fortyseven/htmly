@@ -19,7 +19,7 @@ A lightweight **HTML playground** — write, preview, save, and share HTML snipp
 
 | Measure | Details |
 |---|---|
-| **Iframe sandbox** | `sandbox="allow-same-origin"` — no `allow-scripts`, `allow-forms`, or `allow-popups` |
+| **Iframe sandbox** | `sandbox="allow-same-origin"` by default (strict). Toggle "Enable JS / Canvas" to opt-in → `sandbox="allow-scripts allow-same-origin"` |
 | **CSP header** | `default-src 'none'; frame-src 'self'; object-src 'none'` |
 | **X-Frame-Options** | `SAMEORIGIN` |
 | **Referrer-Policy** | `strict-origin-when-cross-origin` |

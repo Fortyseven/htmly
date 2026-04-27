@@ -19,6 +19,11 @@ $sourceId  = 'view-source';
         <button class="tab-btn" data-tab="source" id="<?= $sourceId ?>-tab">Source</button>
     </div>
     <div class="divider"></div>
+    <label class="toggle">
+        <input type="checkbox" id="view-js-toggle">
+        Enable JS / Canvas
+    </label>
+    <div class="divider"></div>
     <button class="btn btn-secondary" id="view-download-btn">⬇️ Download HTML</button>
     <button class="btn btn-secondary" id="view-copy-btn">📋 Copy HTML to Clipboard</button>
 </div>
@@ -40,8 +45,22 @@ document.addEventListener('DOMContentLoaded', function() {
     var sourceTab      = document.getElementById('<?= $sourceId ?>-tab');
     var downloadBtn    = document.getElementById('view-download-btn');
     var copyBtn        = document.getElementById('view-copy-btn');
+    var jsToggle       = document.getElementById('view-js-toggle');
     var guid           = document.getElementById('view-guid').value;
     var currentTab     = 'rendered';
+
+    /* ── Restore JS toggle preference ────────────── */
+    var storedJs = sessionStorage.getItem('view-js-toggle');
+    if (storedJs === 'true') {
+        jsToggle.checked = true;
+    }
+
+    /* ── JS / Canvas toggle ──────────────────────── */
+
+    jsToggle.addEventListener('change', function() {
+        sessionStorage.setItem('view-js-toggle', jsToggle.checked);
+        updatePreview();
+    });
 
     var debounceTimer = null;
 
@@ -49,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentTab !== 'rendered') return;
         var html = sourceContent.getAttribute('data-html') || '';
         var iframe = document.createElement('iframe');
-        iframe.setAttribute('sandbox', 'allow-same-origin');
+        iframe.setAttribute('sandbox', jsToggle.checked ? 'allow-scripts allow-same-origin' : 'allow-same-origin');
         iframe.setAttribute('srcdoc', html);
         iframe.style.height = '100%';
         iframe.style.flex = '1';
