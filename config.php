@@ -10,7 +10,7 @@ define('DB_PATH', __DIR__ . '/snippets.db');
 
 // ── Snippet defaults ──────────────────────────────────────────
 define('DEFAULT_TTL_SECONDS',   604800);       // 7 days
-define('MAX_SNIPPET_SIZE',      50 * 1024);     // 50 KB
+define('MAX_SNIPPET_SIZE',      2048 * 1024);     // 2 MB
 define('GUID_LENGTH',           10);            // alphanumeric GUID
 define('GUID_CHARS',            '0123456789abcdefghijklmnopqrstuvwxyz');
 define('TOKEN_LENGTH',          40);            // bytes → 80-char hex
