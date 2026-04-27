@@ -232,7 +232,7 @@ function render_home(): void
 <html lang="en">
 <?php
     $pageTitle = 'HTML Scratchpad';
-    include __DIR__ . '/components/header.php';
+    require __DIR__ . '/components/header.php';
 ?>
 <body>
     <div class="header">
@@ -253,7 +253,7 @@ function render_home(): void
     $defaultTtl  = DEFAULT_TTL_SECONDS;
     $guid        = '';
     $token       = '';
-    include __DIR__ . '/components/edit-mode.php';
+    require __DIR__ . '/components/edit-mode.php';
     ?>
 
     <div class="info-note">⚠️ Inline JS is blocked for security — CSS will work.</div>
@@ -273,7 +273,7 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
 <?php
     $pageTitle = 'HTML Scratchpad — ' . htmlspecialchars($guid);
     $badgeText = $isEdit ? 'editing' : 'viewing';
-    include __DIR__ . '/components/header.php';
+    require __DIR__ . '/components/header.php';
 ?>
 <body>
     <div class="header">
@@ -286,12 +286,12 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
         $htmlContent = $html;
         $ttlPreset   = TTL_PRESETS;
         $defaultTtl  = DEFAULT_TTL_SECONDS;
-        include __DIR__ . '/components/edit-mode.php';
+        require __DIR__ . '/components/edit-mode.php';
         ?>
     <?php else: ?>
         <?php
         $htmlContent = $html;
-        include __DIR__ . '/components/view-mode.php';
+        require __DIR__ . '/components/view-mode.php';
         ?>
     <?php endif; ?>
 
@@ -309,10 +309,10 @@ function render_not_found(): void
 <html lang="en">
 <?php
     $pageTitle = 'Snippet Not Found — HTML Scratchpad';
-    include __DIR__ . '/components/header.php';
+    require __DIR__ . '/components/header.php';
 ?>
 <body>
-    <?php include __DIR__ . '/components/not-found.php'; ?>
+    <?php require __DIR__ . '/components/not-found.php'; ?>
 </body>
 </html>
     <?php
