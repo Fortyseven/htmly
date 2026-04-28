@@ -324,8 +324,8 @@ function render_home(): void
 ?>
 <body>
     <div class="header">
-        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a>
-        <span class="badge">beta</span>
+        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a> | 
+        <a href="https://github.com/Fortyseven/htmly" class="github-link" target="_blank" rel="noopener">github</a>
     </div>
 
     <?php if ($flash): ?>

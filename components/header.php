@@ -48,6 +48,14 @@
         }
         .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; }
         .header h1 span { color: var(--accent); }
+        .header .github-link {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .header .github-link:hover {
+            color: var(--text);
+        }
         .header .badge {
             font-size: 11px; padding: 2px 8px; border-radius: 99px;
             background: var(--green); color: var(--bg); font-weight: 600;
