@@ -14,6 +14,7 @@ A lightweight **HTML playground** — write, preview, save, and share HTML snipp
 - 📐 **Resizeable panels** — drag the divider to adjust the split view
 - ⌨️ **Keyboard shortcut** — `Ctrl+S` to save
 - 📱 **Responsive** — works on desktop and mobile
+- 🛠️ **Admin page** — list, view, and delete all snippets (IP-whitelisted)
 
 ## Security
 
@@ -26,6 +27,7 @@ A lightweight **HTML playground** — write, preview, save, and share HTML snipp
 | **Rate limiting** | 10 saves / 10 min per IP; 50 reads / 1 min per IP |
 | **Max snippet size** | 50 KB enforced server-side |
 | **IP hashing** | SHA-256 with server salt — raw IPs never stored |
+| **Admin access** | IP whitelist only — non-whitelisted IPs redirected |
 
 ## Quick Start
 
@@ -67,6 +69,18 @@ Open <http://localhost:8080> in your browser.
 6. **Download** — export as a `.html` file
 
 > ⚠️ **Inline JS is blocked** for security. CSS works fine.
+
+## Admin
+
+The admin page at `/admin` lists all snippets with their GUID, creation date, age, TTL, size, and actions (edit link + delete). Access is restricted to IPs listed in the `ADMIN_IP_WHITELIST` config.
+
+To enable, set your IPs in `config.php`:
+
+```php
+define('ADMIN_IP_WHITELIST', ['127.0.0.1', '192.168.1.50']);
+```
+
+Non-whitelisted IPs are redirected to the homepage. Set to an empty array (default) to disable entirely.
 
 ## License
 
