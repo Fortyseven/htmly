@@ -286,8 +286,8 @@ function cleanup_expired(): array
     $oldRate = $now - RATE_SAVE_WINDOW;
     $db = db();
 
-    // Expired snippets
-    $del1 = $db->exec("DELETE FROM snippets WHERE created_at + ttl_seconds < $now");
+    // Expired snippets (skip ttl_seconds=0 which means permanent)
+    $del1 = $db->exec("DELETE FROM snippets WHERE ttl_seconds > 0 AND created_at + ttl_seconds < $now");
 
     // Old rate limit entries
     $del2 = $db->exec("DELETE FROM rate_limits WHERE window_start < $oldRate");

@@ -7,7 +7,8 @@
  * @param string $guid          Snippet GUID (optional, for edit-mode endpoints).
  * @param string $token         Access token (optional, for edit-mode endpoints).
  * @param array  $ttlPreset     TTL presets array [seconds => label].
- * @param int    $defaultTtl    Default TTL in seconds.
+ * @param int    $currentTtl    Current TTL to pre-select (defaults to DEFAULT_TTL_SECONDS).
+ * @param bool   $isAdmin       True if the client IP is in ADMIN_IP_WHITELIST.
  */
 
 $toolbarId    = 'edit-toolbar';
@@ -32,8 +33,11 @@ $previewPanel = 'edit-preview-panel';
     <div class="divider"></div>
     <select class="ttl-select" id="edit-ttl-select" title="Snippet TTL">
         <?php foreach ($ttlPreset as $secs => $label): ?>
-        <option value="<?= $secs ?>" <?= $secs === $defaultTtl ? 'selected' : '' ?>><?= $label ?></option>
+        <option value="<?= $secs ?>" <?= $secs === ($currentTtl ?? DEFAULT_TTL_SECONDS) ? 'selected' : '' ?>><?= $label ?></option>
         <?php endforeach; ?>
+        <?php if ($isAdmin ?? false): ?>
+        <option value="0" <?= (($currentTtl ?? DEFAULT_TTL_SECONDS) === TTL_PERMANENT) ? 'selected' : '' ?>>♾️ Permanent</option>
+        <?php endif; ?>
     </select>
     <button class="btn btn-primary" id="edit-save-btn">💾 Save</button>
     <div class="divider"></div>

@@ -20,6 +20,8 @@ define('TOKEN_LENGTH',          40);            // bytes → 80-char hex
 define('GUID_RETRIES',          3);
 
 // ── TTL presets (label => seconds) ────────────────────────────
+// Use 0 for "permanent" — only available to IPs in ADMIN_IP_WHITELIST.
+define('TTL_PERMANENT', 0);
 define('TTL_PRESETS', [
     3600    => '1 hour',
     86400   => '1 day',

@@ -172,7 +172,12 @@ function handle_save(): void
     $ttl  = (int) $data['ttl'];
 
     // Validate TTL
-    if (!in_array($ttl, array_keys(TTL_PRESETS), true)) {
+    if ($ttl === TTL_PERMANENT) {
+        // Permanent snippets only for whitelisted IPs
+        if (!is_admin_ip()) {
+            json_response(['error' => 'Permanent snippets require admin access'], 403);
+        }
+    } elseif (!in_array($ttl, array_keys(TTL_PRESETS), true)) {
         json_response(['error' => 'Invalid TTL'], 400);
     }
 
@@ -338,7 +343,8 @@ function render_home(): void
     <?php
     $htmlContent = '';
     $ttlPreset   = TTL_PRESETS;
-    $defaultTtl  = DEFAULT_TTL_SECONDS;
+    $currentTtl  = DEFAULT_TTL_SECONDS;
+    $isAdmin     = is_admin_ip();
     $guid        = '';
     $token       = '';
     require __DIR__ . '/components/edit-mode.php';
@@ -375,7 +381,8 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
         <?php
         $htmlContent = $html;
         $ttlPreset   = TTL_PRESETS;
-        $defaultTtl  = DEFAULT_TTL_SECONDS;
+        $currentTtl  = $snippet['ttl_seconds'];
+        $isAdmin     = is_admin_ip();
         require __DIR__ . '/components/edit-mode.php';
         ?>
     <?php else: ?>
@@ -543,7 +550,7 @@ function render_admin_page(array $snippets): void
                         <td><a class="guid" href="/s/<?= htmlspecialchars($snippet['guid']) ?>" target="_blank"><?= htmlspecialchars($snippet['guid']) ?></a></td>
                         <td><span class="created-date"><?= date('Y-m-d H:i', $snippet['created_at']) ?></span></td>
                         <td><span class="created-date"><?= format_age(time() - $snippet['created_at']) ?></span></td>
-                        <td><span class="ttl-label"><?= htmlspecialchars(TTL_PRESETS[$snippet['ttl_seconds']] ?? $snippet['ttl_seconds'] . 's') ?></span></td>
+                        <td><span class="ttl-label"><?= $snippet['ttl_seconds'] === TTL_PERMANENT ? '♾️ Permanent' : htmlspecialchars(TTL_PRESETS[$snippet['ttl_seconds']] ?? $snippet['ttl_seconds'] . 's') ?></span></td>
                         <td><span class="created-date"><?= format_bytes(strlen($snippet['html_content'])) ?></span></td>
                         <td>
                             <a class="action-link" href="/s/<?= htmlspecialchars($snippet['guid']) ?>?t=<?= htmlspecialchars($snippet['access_token']) ?>" target="_blank">Edit Link</a>
