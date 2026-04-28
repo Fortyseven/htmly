@@ -1,9 +1,12 @@
 <?php
 /**
- * HTML Scratchpad — Configuration
+ * Htmly — Configuration
  *
  * All tuning parameters live here. No code logic.
  */
+
+// ── Site ──────────────────────────────────────────────────────
+define('SITE_TITLE', 'Htmly');
 
 // ── Database ──────────────────────────────────────────────────
 define('DB_PATH', __DIR__ . '/snippets.db');

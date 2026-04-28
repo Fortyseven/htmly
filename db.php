@@ -1,6 +1,6 @@
 <?php
 /**
- * HTML Scratchpad — Database layer
+ * Htmly — Database layer
  *
  * SQLite schema, snippet CRUD, rate limiting, and TTL cleanup.
  * Requires: config.php

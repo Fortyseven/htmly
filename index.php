@@ -1,6 +1,6 @@
 <?php
 /**
- * HTML Scratchpad — Main entry point
+ * Htmly — Main entry point
  *
  * Routing, security headers, API endpoints, and UI rendering.
  * Uses components in components/ for layout separation.
@@ -319,12 +319,12 @@ function render_home(): void
 <!DOCTYPE html>
 <html lang="en">
 <?php
-    $pageTitle = 'HTML Scratchpad';
+    $pageTitle = SITE_TITLE;
     require __DIR__ . '/components/header.php';
 ?>
 <body>
     <div class="header">
-        <a href="/" style="text-decoration:none; color:inherit;"><h1>HTML <span>Scratchpad</span></h1></a>
+        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a>
         <span class="badge">beta</span>
     </div>
 
@@ -361,13 +361,13 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
 <!DOCTYPE html>
 <html lang="en">
 <?php
-    $pageTitle = 'HTML Scratchpad — ' . htmlspecialchars($guid);
+    $pageTitle = SITE_TITLE . ' — ' . htmlspecialchars($guid);
     $badgeText = $isEdit ? 'editing' : 'viewing';
     require __DIR__ . '/components/header.php';
 ?>
 <body>
     <div class="header">
-        <a href="/" style="text-decoration:none; color:inherit;"><h1>HTML <span>Scratchpad</span></h1></a>
+        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a>
         <span class="badge <?= $isEdit ? 'edit' : '' ?>"><?= $isEdit ? 'editing' : 'viewing' ?></span>
     </div>
 
@@ -402,7 +402,7 @@ function render_admin_page(array $snippets): void
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin — HTML Scratchpad</title>
+    <title>Admin — <?= SITE_TITLE ?></title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -518,7 +518,7 @@ function render_admin_page(array $snippets): void
 </head>
 <body>
     <div class="admin-header">
-        <h1>HTML <span>Scratchpad</span> — Admin</h1>
+        <h1><?= SITE_TITLE ?> — Admin</h1>
         <a href="/">← Back to homepage</a>
     </div>
     <div class="admin-body">
@@ -607,7 +607,7 @@ function render_not_found(): void
 <!DOCTYPE html>
 <html lang="en">
 <?php
-    $pageTitle = 'Snippet Not Found — HTML Scratchpad';
+    $pageTitle = 'Snippet Not Found — ' . SITE_TITLE;
     require __DIR__ . '/components/header.php';
 ?>
 <body>
