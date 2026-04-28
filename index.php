@@ -59,6 +59,51 @@ function json_response(array $data, int $code = 200): never
     exit;
 }
 
+/** Check if the client IP is in the admin whitelist. */
+function is_admin_ip(): bool
+{
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    return in_array($ip, ADMIN_IP_WHITELIST, true);
+}
+
+/** Format a duration in seconds as a human-readable age string. */
+function format_age(int $seconds): string
+{
+    if ($seconds < 60) {
+        return $seconds . 's';
+    }
+    $minutes = (int) floor($seconds / 60);
+    if ($minutes < 60) {
+        return $minutes . 'm';
+    }
+    $hours = (int) floor($minutes / 60);
+    if ($hours < 24) {
+        return $hours . 'h';
+    }
+    $days = (int) floor($hours / 24);
+    if ($days < 30) {
+        return $days . 'd';
+    }
+    $months = (int) floor($days / 30);
+    if ($months < 12) {
+        return $months . 'mo';
+    }
+    return (int) floor($months / 12) . 'y';
+}
+
+/** Format a byte count as a human-readable size string. */
+function format_bytes(int $bytes): string
+{
+    $units = ['B', 'KB', 'MB', 'GB'];
+    $i = 0;
+    $size = $bytes;
+    while ($size >= 1024 && $i < count($units) - 1) {
+        $size /= 1024;
+        $i++;
+    }
+    return round($size, ($i === 0 ? 0 : 1)) . ' ' . $units[$i];
+}
+
 // ── Routing ───────────────────────────────────────────────────
 
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
@@ -77,6 +122,23 @@ if ($path === '/api/delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // API: GET /api/download
 if ($path === '/api/download' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     handle_download();
+}
+
+// Route: /api/admin/delete
+if ($path === '/api/admin/delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!is_admin_ip()) {
+        json_response(['error' => 'Forbidden'], 403);
+    }
+    handle_admin_delete();
+}
+
+// Route: /admin  (admin page)
+if ($path === '/admin') {
+    if (!is_admin_ip()) {
+        redirect('/');
+    }
+    handle_admin();
+    exit;
 }
 
 // Route: /s/{guid}  (snippet view)
@@ -165,6 +227,32 @@ function handle_delete(): void
 
     delete_snippet($data['guid']);
     json_response(['ok' => true]);
+}
+
+function handle_admin_delete(): void
+{
+    $body = file_get_contents('php://input');
+    $data = json_decode($body, true);
+
+    if (!$data || empty($data['guid'])) {
+        json_response(['error' => 'Missing guid'], 400);
+    }
+
+    if (!preg_match('/^[a-zA-Z0-9]+$/', $data['guid'])) {
+        json_response(['error' => 'Invalid GUID'], 400);
+    }
+
+    if (!delete_snippet($data['guid'])) {
+        json_response(['error' => 'Snippet not found'], 404);
+    }
+
+    json_response(['ok' => true]);
+}
+
+function handle_admin(): void
+{
+    $snippets = get_all_snippets();
+    render_admin_page($snippets);
 }
 
 function handle_download(): void
@@ -301,6 +389,213 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
     <div class="info-note">⚠️ Inline JS is blocked for security — CSS will work.</div>
     <?php endif; ?>
 
+</body>
+</html>
+    <?php
+}
+
+function render_admin_page(array $snippets): void
+{
+    ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin — HTML Scratchpad</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: #1a1b26;
+            color: #c0caf5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-header {
+            padding: 16px 24px;
+            background: #24283b;
+            border-bottom: 1px solid #3b4261;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .admin-header h1 { font-size: 18px; font-weight: 600; }
+        .admin-header h1 span { color: #7aa2f7; }
+        .admin-header a {
+            color: #7aa2f7;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .admin-header a:hover { text-decoration: underline; }
+        .admin-body { padding: 24px; flex: 1; max-width: 960px; width: 100%; margin: 0 auto; }
+        .admin-body h2 { font-size: 14px; color: #565f89; margin-bottom: 16px; font-weight: 500; }
+        .snippet-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #24283b;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .snippet-table thead th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #565f89;
+            border-bottom: 1px solid #3b4261;
+            background: #1f2335;
+        }
+        .snippet-table tbody td {
+            padding: 10px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid #3b4261;
+            vertical-align: middle;
+        }
+        .snippet-table tbody tr:last-child td { border-bottom: none; }
+        .snippet-table tbody tr:hover { background: rgba(122,162,247,0.05); }
+        .guid {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #7aa2f7;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .guid:hover { text-decoration: underline; }
+        .created-date { color: #565f89; font-size: 12px; }
+        .ttl-label { color: #565f89; font-size: 12px; }
+        .action-link {
+            color: #7aa2f7;
+            text-decoration: none;
+            font-size: 12px;
+            padding: 3px 8px;
+            border: 1px solid #3b4261;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .action-link:hover { background: #7aa2f7; color: #1a1b26; }
+        .delete-btn {
+            background: none;
+            border: 1px solid #f7768e;
+            color: #f7768e;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+        .delete-btn:hover { background: #f7768e; color: #1a1b26; }
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #565f89;
+            font-size: 14px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #24283b;
+            border: 1px solid #3b4261;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #c0caf5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.2s;
+            pointer-events: none;
+        }
+        .toast.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1>HTML <span>Scratchpad</span> — Admin</h1>
+        <a href="/">← Back to homepage</a>
+    </div>
+    <div class="admin-body">
+        <h2><?= count($snippets) ?> snippet<?= count($snippets) !== 1 ? 's' : '' ?> stored</h2>
+        <?php if (empty($snippets)): ?>
+            <div class="empty-state">No snippets in the database.</div>
+        <?php else: ?>
+            <table class="snippet-table">
+                <thead>
+                    <tr>
+                        <th>GUID</th>
+                        <th>Created</th>
+                        <th>Age</th>
+                        <th>TTL</th>
+                        <th>Size</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($snippets as $snippet): ?>
+                    <tr data-guid="<?= htmlspecialchars($snippet['guid']) ?>">
+                        <td><a class="guid" href="/s/<?= htmlspecialchars($snippet['guid']) ?>" target="_blank"><?= htmlspecialchars($snippet['guid']) ?></a></td>
+                        <td><span class="created-date"><?= date('Y-m-d H:i', $snippet['created_at']) ?></span></td>
+                        <td><span class="created-date"><?= format_age(time() - $snippet['created_at']) ?></span></td>
+                        <td><span class="ttl-label"><?= htmlspecialchars(TTL_PRESETS[$snippet['ttl_seconds']] ?? $snippet['ttl_seconds'] . 's') ?></span></td>
+                        <td><span class="created-date"><?= format_bytes(strlen($snippet['html_content'])) ?></span></td>
+                        <td>
+                            <a class="action-link" href="/s/<?= htmlspecialchars($snippet['guid']) ?>?t=<?= htmlspecialchars($snippet['access_token']) ?>" target="_blank">Edit Link</a>
+                            <button class="delete-btn" onclick="adminDelete('<?= htmlspecialchars($snippet['guid']) ?>')">Delete</button>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+    function showToast(msg) {
+        var el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('visible');
+        setTimeout(function() { el.classList.remove('visible'); }, 2000);
+    }
+
+    function adminDelete(guid) {
+        if (!confirm('Delete snippet ' + guid + '?')) return;
+        fetch('/api/admin/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({guid: guid})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                document.querySelector('tr[data-guid="' + guid + '"]').remove();
+                var h2 = document.querySelector('.admin-body h2');
+                var count = document.querySelectorAll('.snippet-table tbody tr').length;
+                h2.textContent = count + ' snippet' + (count !== 1 ? 's' : '') + ' stored';
+                if (count === 0) {
+                    var tbody = document.querySelector('.snippet-table tbody');
+                    if (!tbody.querySelector('tr')) {
+                        document.querySelector('.snippet-table').style.display = 'none';
+                        var empty = document.createElement('div');
+                        empty.className = 'empty-state';
+                        empty.textContent = 'No snippets in the database.';
+                        h2.parentNode.appendChild(empty);
+                    }
+                }
+                showToast('Deleted ' + guid);
+            } else {
+                showToast('Error: ' + (data.error || 'Unknown'));
+            }
+        })
+        .catch(function() { showToast('Request failed'); });
+    }
+    </script>
 </body>
 </html>
     <?php

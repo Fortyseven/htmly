@@ -4,8 +4,9 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Route /api/* and /s/{guid} to index.php
+# Route /api/*, /admin, and /s/{guid} to index.php
 RewriteRule ^api/.* index.php [L,QSA]
+RewriteRule ^admin$ index.php [L,QSA]
 RewriteRule ^s/([a-zA-Z0-9]+)$ index.php?guid=$1 [L,QSA]
 
 # Block access to sensitive files

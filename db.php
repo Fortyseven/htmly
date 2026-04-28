@@ -175,6 +175,24 @@ function delete_snippet(string $guid): bool
     return $db->changes() > 0;
 }
 
+// ── Admin queries ─────────────────────────────────────────────
+
+/**
+ * Retrieve all snippets ordered by creation time (newest first).
+ *
+ * @return array<int, array{guid: string, html_content: string, access_token: string, created_at: int, ttl_seconds: int}>
+ */
+function get_all_snippets(): array
+{
+    $db = db();
+    $result = $db->query('SELECT * FROM snippets ORDER BY created_at DESC');
+    $snippets = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $snippets[] = $row;
+    }
+    return $snippets;
+}
+
 // ── Token verification ────────────────────────────────────────
 
 /**

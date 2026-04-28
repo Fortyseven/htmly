@@ -46,5 +46,10 @@ define('LIVE_PREVIEW_DEBOUNCE', 300);
 // ── Preview defaults ──────────────────────────────────────────
 define('DEFAULT_JS_ENABLED', true);             // JS/Canvas in iframes by default
 
+// ── Admin access ──────────────────────────────────────────────
+// Whitelist of IPs allowed to access the admin page.
+// Set to an empty array to disable admin access entirely.
+define('ADMIN_IP_WHITELIST', ['127.0.0.1','24.62.226.62']);
+
 // ── Session / flash ───────────────────────────────────────────
 define('SESSION_NAME', 'htmly');
