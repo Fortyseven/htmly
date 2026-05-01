@@ -35,7 +35,7 @@ $contentType  = $contentType ?? 'html';
     </div>
     <div class="divider"></div>
     <label class="toggle">
-        <input type="checkbox" id="edit-wrap-toggle">
+        <input type="checkbox" id="edit-wrap-toggle" checked>
         Word Wrap
     </label>
     <div class="divider"></div>
@@ -114,9 +114,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* ── Word wrap toggle ────────────────────────── */
 
-    /* Restore preference or default off */
+    /* Restore preference or default on */
     var storedWrap = sessionStorage.getItem('edit-wrap-toggle');
-    wrapToggle.checked = storedWrap !== null ? (storedWrap === 'true') : false;
+    wrapToggle.checked = storedWrap !== null ? (storedWrap === 'true') : true;
     if (wrapToggle.checked) {
         editor.classList.add('word-wrap');
         highlightCode.classList.add('word-wrap');
