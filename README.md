@@ -5,11 +5,12 @@ A lightweight **HTML playground** — write, preview, save, and share HTML snipp
 ## Features
 
 - ✍️ **Live HTML editor** with split-view preview in a sandboxed `<iframe>`
+- 📝 **Markdown support** — write Markdown with client-side rendering via markdown-it
 - 💾 **Save & share** — get a clean short URL for any snippet
 - ⏱️ **Auto-expire** — snippets self-delete after a configurable TTL (1h / 1d / 7d)
 - 🔐 **Token-based access** — edit or delete your snippets with a secret token
 - 📋 **One-click copy** — copy share URLs to clipboard
-- ⬇️ **Download** — export snippets as `.html` files
+- ⬇️ **Download** — export snippets as `.html` or `.md` files
 - 🔒 **Sandboxed rendering** — no inline JS execution in previews
 - 📐 **Resizeable panels** — drag the divider to adjust the split view
 - ⌨️ **Keyboard shortcut** — `Ctrl+S` to save
@@ -49,30 +50,57 @@ Open <http://localhost:8080> in your browser.
 
 ```
 /
-├── index.php        # Main entry point, router, UI
-├── config.php       # Configuration constants
-├── db.php           # Database layer (schema, CRUD, rate limiting)
-├── prism.min.js     # Prism.js (bundled, HTML syntax highlighting)
-├── prism.css        # Dark theme for syntax highlighting
-├── .htaccess        # Apache rewrite rules
-├── snippets.db      # SQLite database (auto-created)
-└── README.md        # This file
+├── index.php             # Main entry point, router, UI
+├── config.php            # Configuration constants
+├── db.php                # Database layer (schema, CRUD, rate limiting)
+├── components/           # Reusable PHP templates
+│   ├── header.php        # Shared page header
+│   ├── edit-mode.php     # Editor UI with live preview
+│   └── view-mode.php     # Read-only view with Rendered/Source tabs
+├── markdown-it.min.js    # Client-side Markdown renderer (v14.1.0)
+├── prism.min.js          # Prism.js (bundled, HTML syntax highlighting)
+├── prism.css             # Dark theme for syntax highlighting
+├── migrate-database.php  # Migration script for new schema
+├── .htaccess             # Apache rewrite rules
+├── snippets.db           # SQLite database (auto-created)
+└── README.md             # This file
 ```
 
 ## Usage
 
-1. **Write HTML** in the editor panel (left side)
-2. **Preview** appears instantly (live preview) or on tab switch
-3. **Save** — pick a TTL, click Save, copy the share URL
-4. **Share** — send the URL; recipients see the rendered HTML
-5. **Edit** — append `?t={token}` to the URL to re-open in edit mode
-6. **Download** — export as a `.html` file
+1. **Choose a type** — toggle between **HTML** and **Markdown** in the editor toolbar
+2. **Write** in the editor panel (left side)
+3. **Preview** appears instantly (live preview) or on tab switch
+4. **Save** — pick a TTL, click Save, copy the share URL
+5. **Share** — send the URL; recipients see the rendered content
+6. **Edit** — append `?t={token}` to the URL to re-open in edit mode
+7. **Download** — export as a `.html` or `.md` file
 
 > ⚠️ **Inline JS is blocked** for security. CSS works fine.
 
+## Markdown
+
+Toggle the **Markdown** button to switch the editor to Markdown mode. Markdown is rendered client-side using [markdown-it](https://github.com/markdown-it/markdown-it) (GFM-compliant).
+
+- **Rendering** happens in the preview iframe — the raw Markdown is stored in the database
+- **View mode** shows a **Rendered** tab (styled with a dark theme) and a **Source** tab (raw Markdown with syntax highlighting)
+- **Download** exports the raw `.md` file
+- The toggle preference persists via `localStorage`
+
+### Database Migration
+
+If you have an existing database without the `content_type` column, run the migration script before deploying:
+
+```bash
+php migrate-database.php snippets.db snippets-migrated.db
+cp snippets-migrated.db snippets.db
+```
+
+This creates a new database with the updated schema, copies all snippets (defaulting to `html` content type), and preserves rate limit data. The original file is never overwritten.
+
 ## Admin
 
-The admin page at `/admin` lists all snippets with their GUID, creation date, age, TTL, size, and actions (edit link + delete). Access is restricted to IPs listed in the `ADMIN_IP_WHITELIST` config.
+The admin page at `/admin` lists all snippets with their GUID, content type, creation date, age, TTL, size, and actions (edit link + delete). Access is restricted to IPs listed in the `ADMIN_IP_WHITELIST` config.
 
 To enable, set your IPs in `config.php`:
 
