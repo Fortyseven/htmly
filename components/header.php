@@ -192,7 +192,7 @@
         .editor-panel textarea#edit-editor.word-wrap,
         #highlight-overlay code.word-wrap {
             white-space: pre-wrap !important;
-            word-break: break-all;
+            overflow-wrap: break-word;
         }
 
         /* Divider / resize handle */
