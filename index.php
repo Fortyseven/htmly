@@ -168,8 +168,13 @@ function handle_save(): void
         json_response(['error' => 'Missing html or ttl'], 400);
     }
 
-    $html = $data['html'];
-    $ttl  = (int) $data['ttl'];
+    $html       = $data['html'];
+    $ttl        = (int) $data['ttl'];
+    $contentType = $data['contentType'] ?? 'html';
+    // Validate content type
+    if (!in_array($contentType, ['html', 'markdown'], true)) {
+        json_response(['error' => 'Invalid content type'], 400);
+    }
 
     // Validate TTL
     if ($ttl === TTL_PERMANENT) {
@@ -193,7 +198,7 @@ function handle_save(): void
         if (!verify_token($existingGuid, $existingToken)) {
             json_response(['error' => 'Invalid token'], 403);
         }
-        if (!update_snippet($existingGuid, $html, $ttl)) {
+        if (!update_snippet($existingGuid, $html, $ttl, $contentType)) {
             json_response(['error' => 'Update failed'], 500);
         }
         json_response([
@@ -205,7 +210,7 @@ function handle_save(): void
     }
 
     try {
-        $result = create_snippet($html, $ttl);
+        $result = create_snippet($html, $ttl, $contentType);
         json_response([
             'guid' => $result['guid'],
             'token' => $result['token'],
@@ -279,10 +284,13 @@ function handle_download(): void
         json_response(['error' => 'Too many requests. Try again later.'], 429);
     }
 
-    // Download as attachment
-    $filename = 'snippet-' . $guid . '.html';
+    // Download as attachment with correct extension
+    $contentType = $snippet['content_type'] ?? 'html';
+    $ext = $contentType === 'markdown' ? 'md' : 'html';
+    $mimeType = $contentType === 'markdown' ? 'text/markdown; charset=utf-8' : 'text/html; charset=utf-8';
+    $filename = 'snippet-' . $guid . '.' . $ext;
     http_response_code(200);
-    header('Content-Type: text/html; charset=utf-8');
+    header('Content-Type: ' . $mimeType);
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('X-Content-Type-Options: nosniff');
     echo $snippet['html_content'];
@@ -312,7 +320,8 @@ function handle_snippet_view(string $guid): void
         return;
     }
 
-    render_snippet_page($snippet, $isEdit, $token);
+    $contentType = $snippet['content_type'] ?? 'html';
+    render_snippet_page($snippet, $isEdit, $token, $contentType);
 }
 
 // ── Renderers ─────────────────────────────────────────────────
@@ -359,7 +368,7 @@ function render_home(): void
     <?php
 }
 
-function render_snippet_page(array $snippet, bool $isEdit, string $token): void
+function render_snippet_page(array $snippet, bool $isEdit, string $token, string $contentType = 'html'): void
 {
     $guid = $snippet['guid'];
     $html = $snippet['html_content'];
@@ -375,6 +384,7 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
     <div class="header">
         <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a>
         <span class="badge <?= $isEdit ? 'edit' : '' ?>"><?= $isEdit ? 'editing' : 'viewing' ?></span>
+        <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;"><?= strtoupper(htmlspecialchars($contentType)) ?></span>
     </div>
 
     <?php if ($isEdit): ?>
@@ -383,6 +393,7 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token): void
         $ttlPreset   = TTL_PRESETS;
         $currentTtl  = $snippet['ttl_seconds'];
         $isAdmin     = is_admin_ip();
+        $contentType = $contentType;
         require __DIR__ . '/components/edit-mode.php';
         ?>
     <?php else: ?>
@@ -537,6 +548,7 @@ function render_admin_page(array $snippets): void
                 <thead>
                     <tr>
                         <th>GUID</th>
+                        <th>Type</th>
                         <th>Created</th>
                         <th>Age</th>
                         <th>TTL</th>
@@ -548,6 +560,7 @@ function render_admin_page(array $snippets): void
                     <?php foreach ($snippets as $snippet): ?>
                     <tr data-guid="<?= htmlspecialchars($snippet['guid']) ?>">
                         <td><a class="guid" href="/s/<?= htmlspecialchars($snippet['guid']) ?>" target="_blank"><?= htmlspecialchars($snippet['guid']) ?></a></td>
+                        <td><span class="created-date"><?= $snippet['content_type'] === 'markdown' ? 'Markdown' : 'HTML' ?></span></td>
                         <td><span class="created-date"><?= date('Y-m-d H:i', $snippet['created_at']) ?></span></td>
                         <td><span class="created-date"><?= format_age(time() - $snippet['created_at']) ?></span></td>
                         <td><span class="ttl-label"><?= $snippet['ttl_seconds'] === TTL_PERMANENT ? '♾️ Permanent' : htmlspecialchars(TTL_PRESETS[$snippet['ttl_seconds']] ?? $snippet['ttl_seconds'] . 's') ?></span></td>

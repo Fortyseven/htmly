@@ -176,9 +176,9 @@
             -moz-appearance: none;
             z-index: 2;
         }
-        /* Placeholder shown when textarea is empty */
+        /* Placeholder shown when textarea is empty — dynamic via data-placeholder */
         .editor-panel textarea#edit-editor:empty::before {
-            content: "Type your HTML here...";
+            content: attr(data-placeholder);
             color: var(--text-muted);
             pointer-events: none;
         }

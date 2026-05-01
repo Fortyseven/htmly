@@ -12,6 +12,7 @@ define('SITE_TITLE', 'Htmly');
 define('DB_PATH', __DIR__ . '/snippets.db');
 
 // ── Snippet defaults ──────────────────────────────────────────
+define('DB_CONTENT_TYPE_DEFAULT', 'html');
 define('DEFAULT_TTL_SECONDS',   604800);       // 7 days
 define('MAX_SNIPPET_SIZE',      2048 * 1024);     // 2 MB
 define('GUID_LENGTH',           10);            // alphanumeric GUID

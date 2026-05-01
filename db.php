@@ -70,12 +70,28 @@ function init_db(): void
         CREATE TABLE IF NOT EXISTS snippets (
             guid          TEXT PRIMARY KEY,
             html_content  TEXT NOT NULL,
+            content_type  TEXT NOT NULL DEFAULT ' . DB_CONTENT_TYPE_DEFAULT . ',
             access_token  TEXT NOT NULL,
             created_at    INTEGER NOT NULL,
             ttl_seconds   INTEGER NOT NULL DEFAULT ' . DEFAULT_TTL_SECONDS . '
         )
     ');
     $db->exec('CREATE INDEX IF NOT EXISTS idx_created_at ON snippets(created_at)');
+
+    // Migrate existing database: add content_type column if missing
+    $hasContentType = false;
+    $result = $db->query('PRAGMA table_info(snippets)');
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        if ($row['name'] === 'content_type') {
+            $hasContentType = true;
+            break;
+        }
+    }
+    if (!$hasContentType) {
+        $db->exec(
+            'ALTER TABLE snippets ADD COLUMN content_type TEXT NOT NULL DEFAULT ' . DB_CONTENT_TYPE_DEFAULT
+        );
+    }
 
     $db->exec('
         CREATE TABLE IF NOT EXISTS rate_limits (
@@ -93,11 +109,12 @@ function init_db(): void
 /**
  * Create a new snippet.
  *
- * @param string $html    The HTML content (already validated for size).
- * @param int    $ttl     TTL in seconds (must be in TTL_PRESETS).
+ * @param string $html      The HTML/Markdown content (already validated for size).
+ * @param int    $ttl       TTL in seconds (must be in TTL_PRESETS).
+ * @param string $contentType  'html' or 'markdown'.
  * @return array{guid: string, token: string} New GUID and token.
  */
-function create_snippet(string $html, int $ttl): array
+function create_snippet(string $html, int $ttl, string $contentType = 'html'): array
 {
     $guid = generate_guid();
     $token = generate_token();
@@ -105,11 +122,12 @@ function create_snippet(string $html, int $ttl): array
 
     $db = db();
     $stmt = $db->prepare('
-        INSERT INTO snippets (guid, html_content, access_token, created_at, ttl_seconds)
-        VALUES (:g, :h, :t, :c, :ttl)
+        INSERT INTO snippets (guid, html_content, content_type, access_token, created_at, ttl_seconds)
+        VALUES (:g, :h, :ct, :t, :c, :ttl)
     ');
     $stmt->bindValue(':g', $guid, SQLITE3_TEXT);
     $stmt->bindValue(':h', $html, SQLITE3_TEXT);
+    $stmt->bindValue(':ct', $contentType, SQLITE3_TEXT);
     $stmt->bindValue(':t', $token, SQLITE3_TEXT);
     $stmt->bindValue(':c', $now, SQLITE3_INTEGER);
     $stmt->bindValue(':ttl', $ttl, SQLITE3_INTEGER);
@@ -137,17 +155,21 @@ function get_snippet(string $guid): ?array
 }
 
 /**
- * Update an existing snippet's HTML content.
+ * Update an existing snippet's content.
  *
- * @param string $html New HTML content.
+ * @param string $guid      Snippet GUID.
+ * @param string $html      New HTML/Markdown content.
+ * @param int    $ttl       New TTL in seconds.
+ * @param string $contentType  'html' or 'markdown'.
  * @return bool True on success.
  */
-function update_snippet(string $guid, string $html, int $ttl): bool
+function update_snippet(string $guid, string $html, int $ttl, string $contentType = 'html'): bool
 {
     $db = db();
-    $stmt = $db->prepare('UPDATE snippets SET html_content = :h, ttl_seconds = :t WHERE guid = :g');
+    $stmt = $db->prepare('UPDATE snippets SET html_content = :h, ttl_seconds = :t, content_type = :ct WHERE guid = :g');
     $stmt->bindValue(':h', $html, SQLITE3_TEXT);
     $stmt->bindValue(':t', $ttl, SQLITE3_INTEGER);
+    $stmt->bindValue(':ct', $contentType, SQLITE3_TEXT);
     $stmt->bindValue(':g', $guid, SQLITE3_TEXT);
 
     if (!$stmt->execute()) {
