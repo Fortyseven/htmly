@@ -35,6 +35,11 @@ $contentType  = $contentType ?? 'html';
     </div>
     <div class="divider"></div>
     <label class="toggle">
+        <input type="checkbox" id="edit-wrap-toggle">
+        Word Wrap
+    </label>
+    <div class="divider"></div>
+    <label class="toggle">
         <input type="checkbox" id="edit-js-toggle"<?= DEFAULT_JS_ENABLED ? ' checked' : '' ?>>
         Enable JS / Canvas
     </label>
@@ -80,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var preview = document.getElementById('<?= $previewId ?>');
     var liveToggle = document.getElementById('edit-live-toggle');
     var jsToggle = document.getElementById('edit-js-toggle');
+    var wrapToggle = document.getElementById('edit-wrap-toggle');
     var saveBtn = document.getElementById('edit-save-btn');
     var copyBtn = document.getElementById('edit-copy-btn');
     var downloadBtn = document.getElementById('edit-download-btn');
@@ -104,6 +110,22 @@ document.addEventListener('DOMContentLoaded', function() {
     jsToggle.addEventListener('change', function() {
         sessionStorage.setItem('edit-js-toggle', jsToggle.checked);
         updatePreview();
+    });
+
+    /* ── Word wrap toggle ────────────────────────── */
+
+    /* Restore preference or default off */
+    var storedWrap = sessionStorage.getItem('edit-wrap-toggle');
+    wrapToggle.checked = storedWrap !== null ? (storedWrap === 'true') : false;
+    if (wrapToggle.checked) {
+        editor.classList.add('word-wrap');
+        highlightCode.classList.add('word-wrap');
+    }
+
+    wrapToggle.addEventListener('change', function() {
+        sessionStorage.setItem('edit-wrap-toggle', wrapToggle.checked);
+        editor.classList.toggle('word-wrap', wrapToggle.checked);
+        highlightCode.classList.toggle('word-wrap', wrapToggle.checked);
     });
 
     /* ── Content type toggle ─────────────────────── */

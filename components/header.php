@@ -188,6 +188,13 @@
             text-shadow: none;
         }
 
+        /* Word-wrap mode: toggle via .word-wrap class */
+        .editor-panel textarea#edit-editor.word-wrap,
+        #highlight-overlay code.word-wrap {
+            white-space: pre-wrap !important;
+            word-break: break-all;
+        }
+
         /* Divider / resize handle */
         .divider {
             width: 6px; cursor: col-resize; background: var(--border); flex-shrink: 0;
