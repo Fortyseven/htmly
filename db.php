@@ -215,6 +215,34 @@ function get_all_snippets(): array
     return $snippets;
 }
 
+/**
+ * Set a snippet's TTL to permanent.
+ *
+ * @return bool True on success.
+ */
+function pin_snippet(string $guid): bool
+{
+    $db = db();
+    $stmt = $db->prepare('UPDATE snippets SET ttl_seconds = :t WHERE guid = :g');
+    $stmt->bindValue(':t', TTL_PERMANENT, SQLITE3_INTEGER);
+    $stmt->bindValue(':g', $guid, SQLITE3_TEXT);
+
+    if (!$stmt->execute()) {
+        return false;
+    }
+
+    return $db->changes() > 0;
+}
+{
+    $db = db();
+    $result = $db->query('SELECT * FROM snippets ORDER BY created_at DESC');
+    $snippets = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $snippets[] = $row;
+    }
+    return $snippets;
+}
+
 // ── Token verification ────────────────────────────────────────
 
 /**

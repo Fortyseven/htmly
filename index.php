@@ -132,6 +132,14 @@ if ($path === '/api/admin/delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     handle_admin_delete();
 }
 
+// Route: /api/admin/pin
+if ($path === '/api/admin/pin' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!is_admin_ip()) {
+        json_response(['error' => 'Forbidden'], 403);
+    }
+    handle_admin_pin();
+}
+
 // Route: /admin  (admin page)
 if ($path === '/admin') {
     if (!is_admin_ip()) {
@@ -253,6 +261,26 @@ function handle_admin_delete(): void
     }
 
     if (!delete_snippet($data['guid'])) {
+        json_response(['error' => 'Snippet not found'], 404);
+    }
+
+    json_response(['ok' => true]);
+}
+
+function handle_admin_pin(): void
+{
+    $body = file_get_contents('php://input');
+    $data = json_decode($body, true);
+
+    if (!$data || empty($data['guid'])) {
+        json_response(['error' => 'Missing guid'], 400);
+    }
+
+    if (!preg_match('/^[a-zA-Z0-9]+$/', $data['guid'])) {
+        json_response(['error' => 'Invalid GUID'], 400);
+    }
+
+    if (!pin_snippet($data['guid'])) {
         json_response(['error' => 'Snippet not found'], 404);
     }
 
@@ -495,6 +523,24 @@ function render_admin_page(array $snippets): void
             display: inline-block;
         }
         .action-link:hover { background: #7aa2f7; color: #1a1b26; }
+        .pin-btn {
+            background: none;
+            border: 1px solid #e0af68;
+            color: #e0af68;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+        .pin-btn:hover { background: #e0af68; color: #1a1b26; }
+        .pin-btn.pinned {
+            border-color: #565f89;
+            color: #565f89;
+            cursor: default;
+            opacity: 0.5;
+        }
+        .pin-btn.pinned:hover { background: none; }
         .delete-btn {
             background: none;
             border: 1px solid #f7768e;
@@ -567,6 +613,7 @@ function render_admin_page(array $snippets): void
                         <td><span class="created-date"><?= format_bytes(strlen($snippet['html_content'])) ?></span></td>
                         <td>
                             <a class="action-link" href="/s/<?= htmlspecialchars($snippet['guid']) ?>?t=<?= htmlspecialchars($snippet['access_token']) ?>" target="_blank">Edit Link</a>
+                            <button class="pin-btn<?= $snippet['ttl_seconds'] === TTL_PERMANENT ? ' pinned' : '' ?>" onclick="adminPin('<?= htmlspecialchars($snippet['guid']) ?>')"><?= $snippet['ttl_seconds'] === TTL_PERMANENT ? 'Pinned' : 'Pin' ?></button>
                             <button class="delete-btn" onclick="adminDelete('<?= htmlspecialchars($snippet['guid']) ?>')">Delete</button>
                         </td>
                     </tr>
@@ -609,6 +656,30 @@ function render_admin_page(array $snippets): void
                     }
                 }
                 showToast('Deleted ' + guid);
+            } else {
+                showToast('Error: ' + (data.error || 'Unknown'));
+            }
+        })
+        .catch(function() { showToast('Request failed'); });
+    }
+
+    function adminPin(guid) {
+        if (!confirm('Set snippet ' + guid + ' to permanent?')) return;
+        fetch('/api/admin/pin', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({guid: guid})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                var row = document.querySelector('tr[data-guid="' + guid + '"]');
+                var ttlCell = row.querySelector('.ttl-label');
+                ttlCell.textContent = '\u267e\ufe0f Permanent';
+                var pinBtn = row.querySelector('.pin-btn');
+                pinBtn.classList.add('pinned');
+                pinBtn.textContent = 'Pinned';
+                showToast('Pinned ' + guid);
             } else {
                 showToast('Error: ' + (data.error || 'Unknown'));
             }
