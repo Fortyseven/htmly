@@ -234,7 +234,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateHighlight() {
         var text = editor.value;
         // Handle trailing newline: Prism ignores empty final line
-        var originalText = text;
         if (text[text.length - 1] === '\n') {
             text += ' ';
         }
@@ -242,10 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
         highlightCode.innerHTML = text
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;');
-        // Only apply Prism highlighting for HTML (Prism doesn't bundle markdown)
-        if (currentContentType === 'html') {
-            try { Prism.highlightElement(highlightCode); } catch(e) {}
-        }
+        try { Prism.highlightElement(highlightCode); } catch(e) {}
     }
 
     /* ── Scroll sync ─────────────────────────────── */
