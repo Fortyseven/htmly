@@ -244,26 +244,20 @@ document.addEventListener('DOMContentLoaded', function() {
         try { Prism.highlightElement(highlightCode); } catch(e) {}
     }
 
-    /* ── Scroll sync ─────────────────────────────── */
+    /* ── Scroll sync (transform-based) ───────────── */
 
-    function syncScroll(source, target) {
-        target.scrollTop = source.scrollTop;
-        target.scrollLeft = source.scrollLeft;
+    /* The highlight overlay has overflow:hidden and uses CSS transform
+       instead of scrollLeft/scrollTop. This avoids visual drift caused
+       by width mismatches between plain-text textarea and Prism <span>
+       tokens — the overlay content always follows the textarea exactly. */
+
+    function syncScroll() {
+        var sLeft = editor.scrollLeft;
+        var sTop  = editor.scrollTop;
+        highlightCode.style.transform = 'translate(' + (-sLeft) + 'px, ' + (-sTop) + 'px)';
     }
 
-    var syncingScroll = false;
-    editor.addEventListener('scroll', function() {
-        if (syncingScroll) return;
-        syncingScroll = true;
-        syncScroll(editor, highlightOverlay);
-        syncingScroll = false;
-    });
-    highlightOverlay.addEventListener('scroll', function() {
-        if (syncingScroll) return;
-        syncingScroll = true;
-        syncScroll(highlightOverlay, editor);
-        syncingScroll = false;
-    });
+    editor.addEventListener('scroll', syncScroll);
 
     /* ── Tab key handling ────────────────────────── */
 

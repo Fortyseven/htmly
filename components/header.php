@@ -146,19 +146,20 @@
             tab-size: 4;
         }
 
-        /* Highlight overlay (behind textarea) */
+        /* Highlight overlay (behind textarea) — never scrolls, uses transform */
         #highlight-overlay {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             margin: 0; padding: 16px;
             border: none; outline: none; resize: none;
             background: transparent;
-            white-space: pre; overflow: auto;
+            white-space: pre; overflow: hidden;
             pointer-events: none;
             z-index: 1;
         }
         #highlight-overlay code {
             white-space: pre; display: block; min-height: 100%;
+            overflow: visible;
         }
 
         /* Textarea (on top, transparent) */
