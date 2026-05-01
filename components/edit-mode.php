@@ -341,6 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ── Split pane resize ───────────────────────── */
 
     var isResizing = false;
+    var dragOverlay = null;
 
     resizeHandle.addEventListener('mousedown', function(e) {
         isResizing = true;
@@ -348,6 +349,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
         e.preventDefault();
+
+        /* Block the iframe from stealing mouse events during drag.
+           Without this, mousemove/mmouseup are captured by the iframe
+           and the divider stops tracking or gets stuck "grabbed". */
+        dragOverlay = document.createElement('div');
+        dragOverlay.style.cssText =
+            'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;cursor:col-resize;';
+        document.body.appendChild(dragOverlay);
     });
 
     document.addEventListener('mousemove', function(e) {
@@ -363,6 +372,10 @@ document.addEventListener('DOMContentLoaded', function() {
         resizeHandle.classList.remove('active');
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
+        if (dragOverlay) {
+            document.body.removeChild(dragOverlay);
+            dragOverlay = null;
+        }
     });
 
     /* ── Clipboard ───────────────────────────────── */
