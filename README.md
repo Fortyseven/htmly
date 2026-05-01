@@ -76,8 +76,6 @@ Open <http://localhost:8080> in your browser.
 6. **Edit** — append `?t={token}` to the URL to re-open in edit mode
 7. **Download** — export as a `.html` or `.md` file
 
-> ⚠️ **Inline JS is blocked** for security. CSS works fine.
-
 ## Markdown
 
 Toggle the **Markdown** button to switch the editor to Markdown mode. Markdown is rendered client-side using [markdown-it](https://github.com/markdown-it/markdown-it) (GFM-compliant).
