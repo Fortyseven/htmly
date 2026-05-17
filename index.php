@@ -134,6 +134,22 @@ function extract_title(string $html, string $fallback = ''): string
         }
     }
 
+    // Try Markdown # headers
+    if (preg_match('/^\s*#\s+(.+)$/m', $html, $m)) {
+        $title = trim($m[1]);
+        if ($title !== '') {
+            return $title;
+        }
+    }
+
+    // Fallback: grab first ~60 chars of text content
+    $text = strip_tags($html);
+    $text = preg_replace('/\s+/', ' ', $text);
+    $text = trim($text);
+    if ($text !== '') {
+        return mb_substr($text, 0, 60);
+    }
+
     return $fallback;
 }
 
@@ -635,7 +651,7 @@ function render_admin_page(array $snippets): void
             font-size: 14px;
         }
         .admin-header a:hover { text-decoration: underline; }
-        .admin-body { padding: 24px; flex: 1; max-width: 960px; width: 100%; margin: 0 auto; }
+        .admin-body { padding: 24px; flex: 1; max-width: 1152px; width: 100%; margin: 0 auto; }
         .admin-body h2 { font-size: 14px; color: #565f89; margin-bottom: 16px; font-weight: 500; }
         .snippet-table {
             width: 100%;
