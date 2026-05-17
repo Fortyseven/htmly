@@ -104,6 +104,101 @@ function format_bytes(int $bytes): string
     return round($size, ($i === 0 ? 0 : 1)) . ' ' . $units[$i];
 }
 
+/**
+ * Extract a title from raw HTML content.
+ * Looks for <title>, then <h1>, then first meaningful text.
+ */
+function extract_title(string $html, string $fallback = ''): string
+{
+    // Try <title> tag
+    if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
+        $title = trim(strip_tags($m[1]));
+        if ($title !== '') {
+            return $title;
+        }
+    }
+
+    // Try <h1> tag
+    if (preg_match('/<h1[^>]*>(.*?)<\/h1>/is', $html, $m)) {
+        $title = trim(strip_tags($m[1]));
+        if ($title !== '') {
+            return $title;
+        }
+    }
+
+    // Try any heading
+    if (preg_match('/<h([1-6])[^>]*>(.*?)<\/h\1>/is', $html, $m)) {
+        $title = trim(strip_tags($m[2]));
+        if ($title !== '') {
+            return $title;
+        }
+    }
+
+    return $fallback;
+}
+
+/**
+ * Extract a description from raw HTML content.
+ * Looks for meta description, then <p> tag, then strips tags and truncates.
+ */
+function extract_description(string $html, int $maxLen = 200): string
+{
+    // Try meta description
+    if (preg_match('/<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']/is', $html, $m)) {
+        return trim($m[1]);
+    }
+
+    // Try first <p> tag
+    if (preg_match('/<p[^>]*>(.*?)<\/p>/is', $html, $m)) {
+        $desc = trim(strip_tags($m[1]));
+        if ($desc !== '') {
+            return mb_substr($desc, 0, $maxLen);
+        }
+    }
+
+    // Fallback: strip all tags, collapse whitespace, truncate
+    $text = preg_replace('/\s+/', ' ', trim(strip_tags($html)));
+    $text = trim(mb_substr($text, 0, $maxLen));
+    return $text !== '' ? $text : SITE_DESCRIPTION;
+}
+
+/**
+ * Generate Open Graph + Twitter Card meta tags as an HTML string.
+ *
+ * @param array{title: string, description: string, url: string, type?: string, image?: string} $meta
+ * @return string HTML meta tags
+ */
+function render_meta_tags(array $meta): string
+{
+    $title       = htmlspecialchars($meta['title'], ENT_QUOTES, 'UTF-8');
+    $description = htmlspecialchars($meta['description'], ENT_QUOTES, 'UTF-8');
+    $url         = htmlspecialchars($meta['url'], ENT_QUOTES, 'UTF-8');
+    $type        = $meta['type'] ?? 'website';
+    $image       = $meta['image'] ?? '';
+
+    $tags = "<meta property=\"og:type\" content=\"{$type}\">\n";
+    $tags .= "<meta property=\"og:url\" content=\"{$url}\">\n";
+    $tags .= "<meta property=\"og:title\" content=\"{$title}\">\n";
+    $tags .= "<meta property=\"og:description\" content=\"{$description}\">\n";
+    if ($image !== '') {
+        $tags .= "<meta property=\"og:image\" content=\"{$image}\">\n";
+    }
+
+    // Twitter Card (mirrors OG data)
+    $tags .= "<meta name=\"twitter:card\" content=\"summary\">\n";
+    $tags .= "<meta property=\"twitter:domain\" content=\"" . htmlspecialchars(parse_url(SITE_URL, PHP_URL_HOST) ?? '', ENT_QUOTES, 'UTF-8') . "\">\n";
+    $tags .= "<meta property=\"twitter:title\" content=\"{$title}\">\n";
+    $tags .= "<meta property=\"twitter:description\" content=\"{$description}\">\n";
+    if ($image !== '') {
+        $tags .= "<meta property=\"twitter:image\" content=\"{$image}\">\n";
+    }
+
+    // Canonical URL
+    $tags .= "<link rel=\"canonical\" href=\"{$url}\">\n";
+
+    return $tags;
+}
+
 // ── Routing ───────────────────────────────────────────────────
 
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
@@ -130,6 +225,14 @@ if ($path === '/api/admin/delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         json_response(['error' => 'Forbidden'], 403);
     }
     handle_admin_delete();
+}
+
+// Route: /api/admin/create
+if ($path === '/api/admin/create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!is_admin_ip()) {
+        json_response(['error' => 'Forbidden'], 403);
+    }
+    handle_admin_create();
 }
 
 // Route: /api/admin/pin
@@ -247,6 +350,51 @@ function handle_delete(): void
     json_response(['ok' => true]);
 }
 
+/**
+ * Admin-only: create a snippet without rate limiting.
+ *
+ * @throws Exception On DB failure.
+ */
+function handle_admin_create(): void
+{
+    $body = file_get_contents('php://input');
+    $data = json_decode($body, true);
+
+    if (!$data || empty($data['html'])) {
+        json_response(['error' => 'Missing html'], 400);
+    }
+
+    $html       = trim($data['html']);
+    $ttl        = $data['ttl'] ?? DEFAULT_TTL_SECONDS;
+    $contentType = $data['contentType'] ?? DB_CONTENT_TYPE_DEFAULT;
+
+    // Validate content type
+    if (!in_array($contentType, ['html', 'markdown'], true)) {
+        json_response(['error' => 'Invalid content type'], 400);
+    }
+
+    // TTL: allow 0 (permanent) or any preset key
+    if (!in_array((int) $ttl, [TTL_PERMANENT, ...array_keys(TTL_PRESETS)], true)) {
+        json_response(['error' => 'Invalid TTL'], 400);
+    }
+
+    // Validate size
+    if (mb_strlen($html, '8bit') > MAX_SNIPPET_SIZE) {
+        json_response(['error' => 'Snippet too large (max 50 KB)'], 413);
+    }
+
+    try {
+        $result = create_snippet($html, (int) $ttl, $contentType);
+        json_response([
+            'guid'  => $result['guid'],
+            'token' => $result['token'],
+            'url'   => SITE_URL . '/s/' . $result['guid'],
+        ]);
+    } catch (Exception $e) {
+        json_response(['error' => $e->getMessage()], 500);
+    }
+}
+
 function handle_admin_delete(): void
 {
     $body = file_get_contents('php://input');
@@ -357,6 +505,11 @@ function handle_snippet_view(string $guid): void
 function render_home(): void
 {
     $flash = get_flash();
+    $metaTags = render_meta_tags([
+        'title'       => SITE_TITLE,
+        'description' => SITE_DESCRIPTION,
+        'url'         => SITE_URL,
+    ]);
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -366,7 +519,7 @@ function render_home(): void
 ?>
 <body>
     <div class="header">
-        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a> | 
+        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a> |
         <a href="https://github.com/Fortyseven/htmly" class="github-link" target="_blank" rel="noopener">github</a>
     </div>
 
@@ -400,6 +553,12 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token, string
 {
     $guid = $snippet['guid'];
     $html = $snippet['html_content'];
+    $metaTags = render_meta_tags([
+        'title'       => extract_title($html, SITE_TITLE . ' — ' . $guid),
+        'description' => extract_description($html),
+        'url'         => SITE_URL . '/s/' . $guid,
+        'type'        => 'article',
+    ]);
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -694,6 +853,11 @@ function render_admin_page(array $snippets): void
 
 function render_not_found(): void
 {
+    $metaTags = render_meta_tags([
+        'title'       => 'Snippet Not Found',
+        'description' => SITE_DESCRIPTION,
+        'url'         => SITE_URL,
+    ]);
     ?>
 <!DOCTYPE html>
 <html lang="en">

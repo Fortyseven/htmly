@@ -7,6 +7,8 @@
 
 // ── Site ──────────────────────────────────────────────────────
 define('SITE_TITLE', 'Htmly');
+define('SITE_URL', 'https://scratch.network47.org/');
+define('SITE_DESCRIPTION', 'HTML playground — write, preview, save, and share HTML snippets.');
 
 // ── Database ──────────────────────────────────────────────────
 define('DB_PATH', __DIR__ . '/snippets.db');
@@ -55,7 +57,7 @@ define('DEFAULT_JS_ENABLED', true);             // JS/Canvas in iframes by defau
 // ── Admin access ──────────────────────────────────────────────
 // Whitelist of IPs allowed to access the admin page.
 // Set to an empty array to disable admin access entirely.
-define('ADMIN_IP_WHITELIST', ['127.0.0.1','24.62.226.62']);
+define('ADMIN_IP_WHITELIST', ['127.0.0.1','24.218.99.81']);
 
 // ── Session / flash ───────────────────────────────────────────
 define('SESSION_NAME', 'htmly');

@@ -8,6 +8,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $pageTitle ?? SITE_TITLE ?></title>
+    <?php if (isset($metaTags)): ?>
+    <?= $metaTags ?>
+    <?php endif; ?>
     <link rel="stylesheet" href="/prism.css">
     <script src="/prism.js"></script>
     <style>

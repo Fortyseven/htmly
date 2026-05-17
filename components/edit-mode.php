@@ -325,6 +325,86 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    /* ── Drag-and-drop file support ──────────────── */
+
+    var editorPanelEl = document.getElementById('<?= $editorPanel ?>');
+
+    // Build a visual overlay shown while dragging
+    var dropOverlay = null;
+
+    function showDropOverlay() {
+        if (dropOverlay) return;
+        dropOverlay = document.createElement('div');
+        dropOverlay.style.cssText =
+            'position:absolute;top:0;left:0;right:0;bottom:0;z-index:100;'
+            + 'background:rgba(26,27,38,0.85);'
+            + 'display:flex;align-items:center;justify-content:center;'
+            + 'pointer-events:none;'
+            + 'border:2px dashed #7aa2f7;'
+            + 'border-radius:6px;'
+            + 'font-size:16px;color:#7aa2f7;font-weight:500;';
+        dropOverlay.textContent = 'Drop HTML or Markdown file';
+        editorPanelEl.style.position = 'relative';
+        editorPanelEl.appendChild(dropOverlay);
+    }
+
+    function hideDropOverlay() {
+        if (dropOverlay) {
+            editorPanelEl.removeChild(dropOverlay);
+            dropOverlay = null;
+        }
+    }
+
+    function loadFileIntoEditor(file) {
+        var ext = (file.name.split('.').pop() || '').toLowerCase();
+        // Accept .html, .htm, .md, .markdown
+        if (!~['html', 'htm', 'md', 'markdown'].indexOf(ext)) {
+            return; // silently ignore non-matching files
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var text = e.target.result;
+            // Auto-switch content type based on extension
+            if (ext === 'md' || ext === 'markdown') {
+                switchContentType('markdown');
+            } else {
+                switchContentType('html');
+            }
+            editor.value = text;
+            updateHighlight();
+            updatePreview();
+            flashMessage('Loaded: ' + file.name);
+        };
+        reader.readAsText(file);
+    }
+
+    editorPanelEl.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showDropOverlay();
+    });
+
+    editorPanelEl.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    editorPanelEl.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        hideDropOverlay();
+    });
+
+    editorPanelEl.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        hideDropOverlay();
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            loadFileIntoEditor(files[0]);
+        }
+    });
+
     /* ── Set initial content & highlight ─────────── */
 
     var initialPlaceholder = currentContentType === 'html' ? 'Type your HTML here...' : 'Type your Markdown here...';
