@@ -535,8 +535,13 @@ function render_home(): void
 ?>
 <body>
     <div class="header">
-        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a> |
-        <a href="https://github.com/Fortyseven/htmly" class="github-link" target="_blank" rel="noopener">github</a>
+        <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a>
+        <div class="header-links">
+            <a href="https://github.com/Fortyseven/htmly" class="header-link" target="_blank" rel="noopener">github</a>
+            <?php if (is_admin_ip()): ?>
+            <a href="/admin" class="header-link">admin</a>
+            <?php endif; ?>
+        </div>
     </div>
 
     <?php if ($flash): ?>
@@ -588,6 +593,12 @@ function render_snippet_page(array $snippet, bool $isEdit, string $token, string
         <a href="/" style="text-decoration:none; color:inherit;"><h1><?= SITE_TITLE ?></h1></a>
         <span class="badge <?= $isEdit ? 'edit' : '' ?>"><?= $isEdit ? 'editing' : 'viewing' ?></span>
         <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;"><?= strtoupper(htmlspecialchars($contentType)) ?></span>
+        <div class="header-links">
+            <a href="https://github.com/Fortyseven/htmly" class="header-link" target="_blank" rel="noopener">github</a>
+            <?php if (is_admin_ip()): ?>
+            <a href="/admin" class="header-link">admin</a>
+            <?php endif; ?>
+        </div>
     </div>
 
     <?php if ($isEdit): ?>

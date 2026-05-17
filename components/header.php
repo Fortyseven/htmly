@@ -51,12 +51,18 @@
         }
         .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; }
         .header h1 span { color: var(--accent); }
-        .header .github-link {
+        .header .header-links {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-left: auto;
+        }
+        .header .header-link {
             font-size: 12px;
             color: var(--text-muted);
             text-decoration: none;
         }
-        .header .github-link:hover {
+        .header .header-link:hover {
             color: var(--text);
         }
         .header .badge {
