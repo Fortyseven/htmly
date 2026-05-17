@@ -671,6 +671,12 @@ function render_admin_page(array $snippets): void
         }
         .guid:hover { text-decoration: underline; }
         .created-date { color: #565f89; font-size: 12px; }
+        .title-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         .ttl-label { color: #565f89; font-size: 12px; }
         .action-link {
             color: #7aa2f7;
@@ -753,6 +759,7 @@ function render_admin_page(array $snippets): void
                 <thead>
                     <tr>
                         <th>GUID</th>
+                        <th>Title</th>
                         <th>Type</th>
                         <th>Created</th>
                         <th>Age</th>
@@ -765,6 +772,7 @@ function render_admin_page(array $snippets): void
                     <?php foreach ($snippets as $snippet): ?>
                     <tr data-guid="<?= htmlspecialchars($snippet['guid']) ?>">
                         <td><a class="guid" href="/s/<?= htmlspecialchars($snippet['guid']) ?>" target="_blank"><?= htmlspecialchars($snippet['guid']) ?></a></td>
+                        <td class="title-cell" title="<?= htmlspecialchars(extract_title($snippet['html_content'], '')) ?>"><span class="created-date"><?= htmlspecialchars(extract_title($snippet['html_content'], '—')) ?></span></td>
                         <td><span class="created-date"><?= $snippet['content_type'] === 'markdown' ? 'Markdown' : 'HTML' ?></span></td>
                         <td><span class="created-date"><?= date('Y-m-d H:i', $snippet['created_at']) ?></span></td>
                         <td><span class="created-date"><?= format_age(time() - $snippet['created_at']) ?></span></td>
